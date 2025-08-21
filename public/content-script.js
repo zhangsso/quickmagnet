@@ -4,9 +4,9 @@
   document.addEventListener('mouseup', () => {
     const raw = window.getSelection().toString();
     const selection = raw && raw.trim();
+    console.log('选中的内容', selection);
     const now = Date.now();
 
-    // 防抖：避免拖拽划词时多次触发
     if (!selection || (now - lastSentAt) < 400) return;
     lastSentAt = now;
 
@@ -16,7 +16,6 @@
       url: location.href,
       title: document.title
     }, (res) => {
-      // 可选：给个小提示或静默
       // console.log('已发送到后台', res);
     });
   });

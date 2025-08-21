@@ -1,3 +1,4 @@
+console.log('✅ background.js 已加载');
 async function pushToInbox(item) {
   const { inbox = [] } = await chrome.storage.local.get(['inbox']);
   inbox.push(item);
@@ -6,7 +7,7 @@ async function pushToInbox(item) {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg && msg.type === 'clip') {
-    // 来自 content-script 的划词
+    console.log('收到剪贴内容', msg);
     pushToInbox({
       id: crypto.randomUUID(),
       type: 'text',

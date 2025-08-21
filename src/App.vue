@@ -13,37 +13,14 @@
 
     <!-- 搜索 + 视图切换 -->
     <div class="px-3 py-2 flex gap-2 items-center">
-      <input v-model="keyword" @input="refresh"
-        type="text" placeholder="搜索内容 / 标题 / URL"
+      <input v-model="keyword" @input="refresh" type="text" placeholder="搜索内容 / 标题 / URL"
         class="flex-1 px-3 py-2 rounded-lg border outline-none focus:ring-2 focus:ring-blue-500" />
-      <button @click="view='timeline'"
-        :class="tabClass(view==='timeline')">时间线</button>
-      <button @click="view='cards'"
-        :class="tabClass(view==='cards')">卡片</button>
     </div>
 
     <!-- 列表区域 -->
     <div class="px-3 pb-24">
-      <!-- 时间线视图 -->
-      <div v-if="view==='timeline'" class="space-y-3">
-        <div v-for="c in clips" :key="c.id"
-             class="bg-white rounded-xl shadow-sm border p-3">
-          <div class="text-gray-800 whitespace-pre-wrap leading-relaxed">{{ c.content }}</div>
-          <div class="mt-2 text-xs text-gray-500 flex items-center gap-2">
-            <a class="truncate hover:underline" :href="c.url" target="_blank">{{ c.title || c.url }}</a>
-            <span class="ml-auto">{{ timeFormat(c.createdAt) }}</span>
-          </div>
-          <div class="mt-2 flex gap-2">
-            <button class="px-2 py-1 text-sm rounded bg-gray-100 hover:bg-gray-200"
-                    @click="openInNewTab(c.url)">打开原文</button>
-            <button class="px-2 py-1 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700"
-                    @click="shareCard(c)">分享为图片</button>
-          </div>
-        </div>
-      </div>
-
       <!-- 卡片视图 -->
-      <div v-else class="grid grid-cols-1 gap-3">
+      <div class="grid grid-cols-1 gap-3">
         <div v-for="c in clips" :key="c.id" class="bg-white rounded-2xl border shadow-sm">
           <div class="p-3">
             <div class="text-sm text-gray-600">{{ domainOf(c.url) }}</div>
@@ -53,9 +30,9 @@
             </div>
             <div class="mt-3 flex items-center gap-2">
               <button class="px-2 py-1 text-sm rounded bg-gray-100 hover:bg-gray-200"
-                      @click="openInNewTab(c.url)">打开</button>
+                @click="openInNewTab(c.url)">打开</button>
               <button class="px-2 py-1 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700"
-                      @click="shareCard(c)">分享图片</button>
+                @click="shareCard(c)">分享图片</button>
               <div class="ml-auto text-xs text-gray-500">{{ timeFormat(c.createdAt) }}</div>
             </div>
           </div>
@@ -63,7 +40,7 @@
       </div>
 
       <!-- 空态 -->
-      <div v-if="!loading && clips.length===0" class="mt-16 text-center text-gray-500">
+      <div v-if="!loading && clips.length === 0" class="mt-16 text-center text-gray-500">
         还没有收藏，去网页上<strong>划词</strong>试试，或点击上方<strong>整页收藏</strong>。
       </div>
     </div>
@@ -110,16 +87,16 @@ export default {
       return [
         "px-3 py-2 rounded-lg text-sm border",
         active ? "bg-blue-600 text-white border-blue-600"
-               : "bg-white hover:bg-gray-100"
+          : "bg-white hover:bg-gray-100"
       ].join(' ')
     },
     timeFormat(tsOrDate) {
       const d = (typeof tsOrDate === 'number') ? new Date(tsOrDate) : tsOrDate;
-      return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')} ` +
-             `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+      return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')} ` +
+        `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
     },
-    domainOf(url='') {
-      try { return new URL(url).hostname.replace(/^www\./,''); } catch { return ''; }
+    domainOf(url = '') {
+      try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
     },
     openInNewTab(url) {
       if (!url) return;
@@ -134,13 +111,13 @@ export default {
         const exist = await db.clips.toArray();
         const set = new Set(exist.map(e => `${e.content}||${e.url}`));
         const toAdd = inbox.filter(x => !set.has(`${x.content}||${x.url}`))
-                           .map(x => ({
-                             type: x.type || 'text',
-                             content: x.content || '',
-                             url: x.url || '',
-                             title: x.title || '',
-                             createdAt: x.createdAt ? new Date(x.createdAt) : new Date()
-                           }));
+          .map(x => ({
+            type: x.type || 'text',
+            content: x.content || '',
+            url: x.url || '',
+            title: x.title || '',
+            createdAt: x.createdAt ? new Date(x.createdAt) : new Date()
+          }));
         if (toAdd.length) await addClipsBulk(toAdd);
         // 清空 inbox
         await chrome.storage.local.set({ inbox: [] });
@@ -160,27 +137,52 @@ export default {
 
     // 整页收藏：注入脚本抓取标题 / URL / 正文摘要
     async clipCurrentPage() {
+      this.loading = true;
       try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab?.id) return;
+        if (!tab?.id) throw new Error('无法获取当前标签页');
 
-        const [{ result }] = await chrome.scripting.executeScript({
+        const frames = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           func: () => {
-            const text = document.body?.innerText || '';
-            // 简易摘要（前 600 字）
-            const summary = text.trim().replace(/\s+/g, ' ').slice(0, 600);
+            const walker = document.createTreeWalker(
+              document.body,
+              NodeFilter.SHOW_TEXT,
+              {
+                acceptNode: (node) => {
+                  const parent = node.parentElement;
+                  if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA'].includes(parent.tagName)) {
+                    return NodeFilter.FILTER_REJECT;
+                  }
+                  if (parent.offsetWidth <= 1 || parent.offsetHeight <= 1) {
+                    return NodeFilter.FILTER_REJECT;
+                  }
+                  return NodeFilter.FILTER_ACCEPT;
+                }
+              }
+            );
+
+            let text = '';
+            let node;
+            while (node = walker.nextNode()) {
+              text += node.textContent + ' ';
+            }
+
+            const clean = text.trim().replace(/\s+/g, ' ');
             return {
               url: location.href,
               title: document.title,
-              summary
-            }
+              summary: clean.slice(0, 500)
+            };
           }
         });
 
+        const result = frames[0]?.result;
+        if (!result) throw new Error('页面内容提取失败');
+
         await addClip({
           type: 'page',
-          content: result.summary || (result.title || result.url),
+          content: result.summary || result.title || result.url,
           url: result.url,
           title: result.title,
           createdAt: new Date()
@@ -189,6 +191,8 @@ export default {
         await this.refresh();
       } catch (e) {
         console.error('整页收藏失败', e);
+      } finally {
+        this.loading = false;
       }
     },
 
