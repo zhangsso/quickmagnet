@@ -40,7 +40,7 @@
           </div>
           <div class="bg-green-50 rounded-lg p-2">
             <div class="text-lg font-bold text-green-600">{{ stats.favoriteClips }}</div>
-            <div class="text-xs text-green-500">心中所爱</div>
+            <div class="text-xs text-green-500">精选</div>
           </div>
           <div class="bg-purple-50 rounded-lg p-2">
             <div class="text-lg font-bold text-purple-600">{{ folders.length }}</div>
@@ -98,7 +98,7 @@
             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
             </svg>
-            心中所爱
+            精选
           </button>
           <div class="w-px h-4 bg-gray-300"></div>
           <button v-for="folder in folders" :key="folder.id"
@@ -130,7 +130,7 @@
           </div>
           
           <div class="flex items-center gap-2 text-xs text-gray-500">
-            <span>共 {{ clips.length }} 条</span>
+            <span>共 {{ stats.totalClips }} 条</span>
             <select v-model="sortBy" @change="refresh" 
               class="text-xs border-0 bg-transparent outline-none cursor-pointer">
               <option value="time">时间排序</option>
@@ -361,25 +361,44 @@
 
     <!-- 隐藏的分享卡模板（用来转 PNG） -->
     <div class="fixed -left-[9999px] top-0">
-      <div ref="shareTpl" class="w-[720px] rounded-2xl border bg-white p-6 shadow-xl">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div ref="shareTpl" class="w-[400px] bg-gradient-to-br from-blue-50 to-purple-50 p-8 shadow-2xl" style="border-radius: 24px; min-height: 600px;">
+        <!-- 头部区域 -->
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
             </svg>
           </div>
-          <div>
-            <div class="text-gray-700 text-sm">{{ shareDomain }}</div>
-            <div class="text-2xl font-bold leading-snug text-gray-900">{{ shareTitle }}</div>
+          <div class="text-2xl font-bold text-gray-900 mb-2 leading-tight">{{ shareTitle }}</div>
+          <div class="text-sm text-gray-600">{{ shareDomain }}</div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mb-8 shadow-lg border border-white/50">
+          <div class="text-gray-800 leading-relaxed text-[15px] whitespace-pre-wrap" style="max-height: 280px; overflow: hidden;">
+            {{ shareContent }}
           </div>
         </div>
-        <div class="whitespace-pre-wrap text-[16px] leading-7 text-gray-800 mb-6">{{ shareContent }}</div>
-        <div class="flex items-center justify-between pt-4 border-t">
-          <div class="flex items-center gap-2">
-            <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded"></div>
-            <span class="font-semibold text-gray-900">QuickMagnet · 快磁收藏</span>
+        
+        <!-- 二维码和信息区域 -->
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="text-xs text-gray-500 mb-1">扫码阅读原文</div>
+            <div class="text-xs text-gray-400">{{ shareTime }}</div>
+            <div class="flex items-center gap-2 mt-3">
+              <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+              <span class="text-sm font-semibold text-gray-700">QuickMagnet</span>
+            </div>
           </div>
-          <div class="text-sm text-gray-500">{{ shareTime }}</div>
+          <div class="ml-4">
+            <img v-if="shareQRCode" :src="shareQRCode" 
+              class="w-20 h-20 rounded-xl border-2 border-white shadow-lg" 
+              alt="QR Code" />
+          </div>
         </div>
       </div>
     </div>
@@ -798,6 +817,7 @@
 
 <script>
 import { toPng } from 'html-to-image'
+import QRCode from 'qrcode'
 import { 
   db, addClip, addClipsBulk, listClips, updateClip, deleteClip, deleteClips,
   createFolder, listFolders, updateFolder, deleteFolder,
@@ -853,6 +873,7 @@ export default {
       menuToggling: false,
       isClipping: false,
       successMessage: '',
+      initializing: false,
       
       // 设置
       defaultViewMode: 'grid',
@@ -876,27 +897,38 @@ export default {
       shareContent: '',
       shareDomain: '',
       shareTime: '',
+      shareQRCode: '', // 二维码数据
     }
   },
   mounted() {
-    this.init();
-    // 加载设置
-    this.loadSettings();
-    // 添加全局点击事件监听器来关闭菜单
-    this.handleDocumentClick = (event) => {
-      // 检查点击是否在菜单外部
-      if (this.activeMenu && !event.target.closest('.menu-container')) {
-        this.activeMenu = null;
-      }
-    };
-    document.addEventListener('click', this.handleDocumentClick);
+    try {
+      this.init();
+      this.loadSettings();
+      
+      // 添加全局点击事件监听器来关闭菜单
+      this.handleDocumentClick = (event) => {
+        if (this.activeMenu && !event.target.closest('.menu-container')) {
+          this.activeMenu = null;
+        }
+      };
+      document.addEventListener('click', this.handleDocumentClick);
+    } catch (error) {
+      console.error('❌ App.vue mounted 失败:', error);
+    }
   },
   methods: {
     // =========================== 基础功能 ===========================
     async init() {
+      if (this.initializing) {
+        return;
+      }
+      
+      this.initializing = true;
+      
       try {
-        // 1) 把 background 暂存的 inbox 落库（IndexedDB）
+        // 1) 把inbox中的数据转移到IndexedDB
         const { inbox = [] } = await chrome.storage.local.get(['inbox']);
+        
         if (inbox.length) {
           // 去重（简单按 content+url）
           const exist = await db.clips.toArray();
@@ -913,34 +945,49 @@ export default {
               favorite: false,
               archived: false
             }));
+            
           if (toAdd.length) {
             await addClipsBulk(toAdd);
             this.showSuccess(`新增 ${toAdd.length} 条收藏`);
           }
+          
           // 清空 inbox
           await chrome.storage.local.set({ inbox: [] });
         }
 
-        // 2) 加载数据
+        // 2) 加载数据（包括统计信息）
         await this.loadAllData();
         
-        // 3) 简单轮询刷新（也可换成 Dexie hooks）
-        this.poller = setInterval(this.refresh, 3000);
+        // 3) 轮询刷新
+        if (!this.poller) {
+          this.poller = setInterval(async () => {
+            const { inbox = [] } = await chrome.storage.local.get(['inbox']);
+            if (inbox.length > 0) {
+              this.initializing = false;
+              await this.init();
+            }
+          }, 2000);
+        }
       } catch (error) {
-        console.error('初始化失败:', error);
+        console.error('❌ 初始化失败:', error);
       } finally {
         this.loading = false;
+        this.initializing = false;
       }
     },
     
     async loadAllData() {
-      await Promise.all([
-        this.refresh(),
-        this.loadFolders(),
-        this.loadTags(),
-        this.loadStats(),
-        this.loadAvailableTags()
-      ]);
+      try {
+        await Promise.all([
+          this.refresh(),
+          this.loadFolders(),
+          this.loadTags(),
+          this.loadStats(),
+          this.loadAvailableTags()
+        ]);
+      } catch (error) {
+        console.error('❌ 加载数据失败:', error);
+      }
     },
     
     async refresh() {
@@ -959,6 +1006,9 @@ export default {
       } else if (this.sortBy === 'domain') {
         this.clips.sort((a, b) => this.domainOf(a.url).localeCompare(this.domainOf(b.url)));
       }
+      
+      // 每次刷新时也更新统计
+      await this.loadStats();
     },
     
     async loadFolders() {
@@ -970,7 +1020,18 @@ export default {
     },
     
     async loadStats() {
-      this.stats = await getStats();
+      try {
+        this.stats = await getStats();
+      } catch (error) {
+        console.error('❌ 加载统计数据失败:', error);
+        this.stats = {
+          totalClips: 0,
+          favoriteClips: 0,
+          archivedClips: 0,
+          totalFolders: 0,
+          totalTags: 0
+        };
+      }
     },
     
     // =========================== UI 交互 ===========================
@@ -1030,7 +1091,7 @@ export default {
         await updateClip(clip.id, { favorite: !clip.favorite });
         await this.refresh();
         await this.loadStats();
-        this.showSuccess(clip.favorite ? '取消收藏' : '已添加到心中所爱');
+        this.showSuccess(clip.favorite ? '取消精选收藏' : '已添加到精选收藏');
       } catch (error) {
         console.error('更新收藏状态失败:', error);
       }
@@ -1148,7 +1209,7 @@ export default {
         }
         await this.refresh();
         await this.loadStats();
-        this.showSuccess(`已将 ${this.selectedClips.length} 条收藏加入心中所爱`);
+        this.showSuccess(`已将 ${this.selectedClips.length} 条收藏加入精选收藏`);
         this.selectedClips = [];
       } catch (error) {
         console.error('批量收藏失败:', error);
@@ -1606,34 +1667,64 @@ export default {
     },
     
     async shareCard(clip) {
-      // 准备模板数据
-      this.shareTitle = clip.title || this.domainOf(clip.url) || 'QuickMagnet';
-      this.shareContent = clip.content || '';
-      this.shareDomain = this.domainOf(clip.url);
-      this.shareTime = this.timeFormat(clip.createdAt);
-
-      await this.$nextTick();
-      const node = this.$refs.shareTpl;
       try {
-        const dataUrl = await toPng(node, { 
-          cacheBust: true, 
-          pixelRatio: 2,
-          style: {
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        // 准备模板数据
+        this.shareTitle = clip.title || this.domainOf(clip.url) || 'QuickMagnet';
+        this.shareContent = clip.content || '';
+        this.shareDomain = this.domainOf(clip.url);
+        this.shareTime = this.timeFormat(clip.createdAt);
+
+        // 生成二维码
+        if (clip.url) {
+          try {
+            this.shareQRCode = await QRCode.toDataURL(clip.url, {
+              width: 200,
+              margin: 1,
+              color: {
+                dark: '#1f2937',
+                light: '#ffffff'
+              },
+              errorCorrectionLevel: 'M'
+            });
+          } catch (qrError) {
+            console.warn('二维码生成失败:', qrError);
+            this.shareQRCode = '';
           }
-        });
+        }
+
+        await this.$nextTick();
         
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = `QuickMagnet_${this.shareTitle.replace(/[^\w\s]/gi, '')}_${Date.now()}.png`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+        // 等待一下让二维码图片加载完成
+        setTimeout(async () => {
+          const node = this.$refs.shareTpl;
+          try {
+            const dataUrl = await toPng(node, { 
+              cacheBust: true, 
+              pixelRatio: 2,
+              backgroundColor: '#ffffff',
+              style: {
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }
+            });
+            
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            const safeTitle = (this.shareTitle || '快磁收藏').replace(/[^\w\s\u4e00-\u9fa5]/gi, '');
+            a.download = `QuickMagnet_${safeTitle}_${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            
+            this.showSuccess('分享卡片已保存');
+          } catch (err) {
+            console.error('分享图片生成失败：', err);
+            alert('分享图片生成失败，请稍后重试');
+          }
+        }, 300);
         
-        this.showSuccess('分享图片已保存');
-      } catch (err) {
-        console.error('分享图片生成失败：', err);
-        alert('分享图片生成失败，请稍后重试');
+      } catch (error) {
+        console.error('分享卡片生成失败:', error);
+        alert('分享失败，请稍后重试');
       }
     }
   },
