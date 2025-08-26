@@ -1,0 +1,12 @@
+<!-- 这是一个16x16的简化版SVG，适合小图标 -->
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="8" cy="8" r="7" fill="#667eea" stroke="#2563eb" stroke-width="1"/>
+  
+  <!-- 简化磁铁 -->
+  <rect x="4" y="5" width="8" height="2" rx="1" fill="#dc2626"/>
+  <rect x="4" y="9" width="8" height="2" rx="1" fill="#2563eb"/>
+  
+  <!-- 收藏标识 -->
+  <path d="M 7 7 L 7 9 L 8 8.5 L 9 9 L 9 7 Z" fill="#10b981"/>
+</svg>

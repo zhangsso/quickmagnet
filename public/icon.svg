@@ -1,0 +1,44 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="64" cy="64" r="60" fill="url(#gradient1)" stroke="#2563eb" stroke-width="3"/>
+  
+  <!-- 渐变定义 -->
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 磁铁主体 -->
+  <rect x="30" y="35" width="68" height="20" rx="10" fill="#e5e7eb" stroke="#374151" stroke-width="2"/>
+  <rect x="30" y="73" width="68" height="20" rx="10" fill="#e5e7eb" stroke="#374151" stroke-width="2"/>
+  
+  <!-- 磁铁极性 -->
+  <rect x="30" y="35" width="30" height="20" rx="10" fill="#dc2626"/>
+  <rect x="68" y="35" width="30" height="20" rx="10" fill="#2563eb"/>
+  <rect x="30" y="73" width="30" height="20" rx="10" fill="#2563eb"/>
+  <rect x="68" y="73" width="30" height="20" rx="10" fill="#dc2626"/>
+  
+  <!-- N S 标记 -->
+  <text x="45" y="48" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white" text-anchor="middle">N</text>
+  <text x="83" y="48" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white" text-anchor="middle">S</text>
+  <text x="45" y="86" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white" text-anchor="middle">S</text>
+  <text x="83" y="86" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white" text-anchor="middle">N</text>
+  
+  <!-- 磁力线 -->
+  <path d="M 20 45 Q 15 64 20 83" stroke="#374151" stroke-width="2" fill="none"/>
+  <path d="M 108 45 Q 113 64 108 83" stroke="#374151" stroke-width="2" fill="none"/>
+  <path d="M 25 40 Q 18 64 25 88" stroke="#6b7280" stroke-width="1.5" fill="none"/>
+  <path d="M 103 40 Q 110 64 103 88" stroke="#6b7280" stroke-width="1.5" fill="none"/>
+  
+  <!-- 收藏符号 - 书签样式 -->
+  <path d="M 55 58 L 55 68 L 64 63 L 73 68 L 73 58 Z" fill="url(#gradient2)" stroke="#047857" stroke-width="1"/>
+  
+  <!-- 快速标识 - 闪电符号 -->
+  <path d="M 72 25 L 68 35 L 74 35 L 70 45 L 74 35 L 68 35 Z" fill="#fbbf24" stroke="#f59e0b" stroke-width="1"/>
+</svg>
