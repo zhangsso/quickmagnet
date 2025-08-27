@@ -103,7 +103,7 @@
         <!-- 视图切换 -->
         <div class="flex items-center justify-between mt-3">
           <div class="flex bg-gray-100 rounded-lg p-1">
-            <button @click="viewMode = 'grid'"
+            <button @click="viewSwitch('grid')"
               :class="viewMode === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900'"
               class="px-2 py-1 rounded text-xs font-medium transition-all">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,7 +112,7 @@
                 </path>
               </svg>
             </button>
-            <button @click="viewMode = 'favorites'"
+            <button @click="viewSwitch('favorites')"
               :class="viewMode === 'favorites' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900'"
               class="px-2 py-1 rounded text-xs font-medium transition-all">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +121,7 @@
                 </path>
               </svg>
             </button>
-            <button @click="viewMode = 'folders'"
+            <button @click="viewSwitch('folders')"
               :class="viewMode === 'folders' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900'"
               class="px-2 py-1 rounded text-xs font-medium transition-all">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,7 +129,7 @@
                   d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"></path>
               </svg>
             </button>
-            <button @click="viewMode = 'tags'"
+           <button @click="viewSwitch('tags')"
               :class="viewMode === 'tags' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900'"
               class="px-2 py-1 rounded text-xs font-medium transition-all">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,6 +323,26 @@
             <span class="text-xs text-gray-500">{{ timeFormat(clip.createdAt) }}</span>
           </div>
         </div>
+
+         <!-- 空状态 -->
+          <div v-if="!loading && clips.length === 0"
+            class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+              </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">还没有收藏</h3>
+            <p class="text-gray-500 mb-4 max-w-sm">
+              在网页上<strong>选中文字</strong>即可自动收藏，<br>
+              或点击上方按钮<strong>整页收藏</strong>。
+            </p>
+            <button @click="clipCurrentPage"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              立即收藏当前页面
+            </button>
+          </div>
       </div>
 
       <!-- 精选视图 -->
@@ -463,35 +483,10 @@
           <h3 class="text-lg font-medium text-gray-900 mb-2">还没有精选收藏</h3>
           <p class="text-gray-500 mb-4">点击收藏卡片上的星星按钮来添加精选</p>
         </div>
+      </div>
 
-
-
-        <!-- 文件夹视图 -->
+       <!-- 文件夹视图 -->
         <div v-if="!loading && viewMode === 'folders'">
-          <!-- 调试信息 -->
-          <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
-            <div class="font-medium text-yellow-800 mb-2">🔍 文件夹视图调试信息</div>
-            <div class="text-yellow-700 space-y-1">
-              <div>• 加载状态: {{ loading ? '加载中' : '已加载' }}</div>
-              <div>• 视图模式: {{ viewMode }}</div>
-              <div>• 文件夹数量: {{ folders.length }}</div>
-              <div>• 当前选中文件夹: {{ selectedFolder }}</div>
-              <div>• 文件夹收藏数量: {{ folderClips.length }}</div>
-              <div>• 文件夹列表: {{ folders.map(f => f.name).join(', ') || '无' }}</div>
-            </div>
-            <div class="mt-2 flex gap-2">
-              <button @click="createTestFoldersDebug" class="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">
-                📦 创建测试文件夹
-              </button>
-              <button @click="debugFolders" class="px-3 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">
-                🔍 调试文件夹数据
-              </button>
-              <button @click="refreshFolders" class="px-3 py-1 bg-purple-500 text-white rounded text-xs hover:bg-purple-600">
-                🔄 刷新文件夹
-              </button>
-            </div>
-          </div>
-          
           <!-- 面包屑导航 -->
           <div v-if="selectedFolder !== null" class="mb-4 flex items-center gap-2 text-sm">
             <button @click="exitFolderView" class="text-blue-600 hover:text-blue-700 flex items-center gap-1">
@@ -507,44 +502,32 @@
           </div>
 
           <!-- 显示所有文件夹 -->
-          <div v-if="selectedFolder === null">
-            <!-- 数据检查 -->
-            <div class="mb-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-              <div>数据检查: folders.length = {{ folders.length }}</div>
-              <div>hasFolders = {{ hasFolders }}</div>
-              <div>responsiveFolders.length = {{ responsiveFolders.length }}</div>
-              <div>是否为数组: {{ Array.isArray(folders) }}</div>
-              <div>数据类型: {{ typeof folders }}</div>
-              <div v-if="folders.length > 0">第一个文件夹: {{ folders[0] }}</div>
-            </div>
-            
+          <div v-if="selectedFolder == null">
             <!-- 未分类文件夹 -->
-            <div class="mb-4">
-              <button @click="enterFolder(null)"
-                class="w-full p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-3">
-                <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                  <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"></path>
-                  </svg>
-                </div>
-                <div class="flex-1 text-left">
-                  <h3 class="font-medium text-gray-900">未分类</h3>
-                  <p class="text-sm text-gray-500">{{ getUncategorizedCount() }} 条收藏</p>
-                </div>
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            <button @click="enterFolder(null)"
+              class="w-full p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-3 mb-3">
+              <div class="w-12 h-12 rounded-xl bg-gray-100 border-2 border-gray-300 flex items-center justify-center">
+                <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"></path>
                 </svg>
-              </button>
-            </div>
-
+              </div>
+              <div class="flex-1 text-left">
+                <h3 class="font-medium text-gray-900">未分类</h3>
+                <p class="text-sm text-gray-500">{{ getUncategorizedCount() }} 条收藏</p>
+              </div>
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+            
             <!-- 文件夹列表 -->
-            <div v-show="hasFolders" class="space-y-3">
-              <button v-for="folder in responsiveFolders" :key="folder.id" @click="enterFolder(folder.id)"
+            <div class="space-y-3">
+              <button v-for="folder in folders" :key="folder.id" @click="enterFolder(folder.id)"
                 class="w-full p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-3">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center"
-                  :style="{ backgroundColor: folder.color + '20', border: '2px solid ' + folder.color }">
-                  <svg class="w-6 h-6" :style="{ color: folder.color }" fill="none" stroke="currentColor"
+                  :style="{ backgroundColor: (folder.color || '#3b82f6') + '20', border: '2px solid ' + (folder.color || '#3b82f6') }">
+                  <svg class="w-6 h-6" :style="{ color: folder.color || '#3b82f6' }" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"></path>
@@ -559,33 +542,36 @@
                 </svg>
               </button>
             </div>
-
-            <!-- 空状态 - 无文件夹 -->
-            <div v-show="!hasFolders" class="flex flex-col items-center justify-center py-16 text-center">
-              <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            
+            <!-- 空状态 - 没有文件夹 -->
+            <div v-if="folders.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
+              <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"></path>
                 </svg>
               </div>
               <h3 class="text-lg font-medium text-gray-900 mb-2">还没有文件夹</h3>
-              <p class="text-gray-500 mb-4">创建文件夹来整理您的收藏</p>
-              <button @click="showFolderModal = true"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                创建第一个文件夹
-              </button>
+              <p class="text-gray-500 mb-4">点击上方按钮创建你的第一个文件夹</p>
             </div>
           </div>
 
           <!-- 显示选中文件夹的收藏 -->
-          <div v-else>
+          <div v-if="selectedFolder !== null">
             <div class="grid grid-cols-1 gap-4">
-              <div v-for="clip in folderClips" :key="clip.id"
-                class="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+              <div v-for="clip in folderClips" :key="clip.id" :class="[
+                'group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden',
+                batchMode && selectedClips.includes(clip.id) ? 'ring-2 ring-blue-500 border-blue-500' : ''
+              ]">
                 <!-- 使用与网格视图相同的卡片布局 -->
                 <div class="p-4 pb-3">
                   <div class="flex items-start justify-between mb-2">
                     <div class="flex items-start gap-2 flex-1 min-w-0">
+                      <!-- 批量选择框 -->
+                      <div v-if="batchMode" class="flex-shrink-0 mt-1">
+                        <input type="checkbox" :checked="selectedClips.includes(clip.id)" @change="toggleSelection(clip.id)"
+                          class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                      </div>
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
                           <div class="w-4 h-4 rounded bg-gradient-to-r from-blue-400 to-purple-500 flex-shrink-0"></div>
@@ -608,6 +594,46 @@
                           </path>
                         </svg>
                       </button>
+                      <div class="relative menu-container">
+                        <button @click.stop="toggleMenu(clip.id)"
+                          class="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+                          <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z">
+                            </path>
+                          </svg>
+                        </button>
+                        <!-- 下拉菜单 -->
+                        <div v-if="activeMenu === clip.id"
+                          class="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border z-30" @click.stop>
+                          <button @click="editClip(clip); activeMenu = null"
+                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                              </path>
+                            </svg>
+                            编辑
+                          </button>
+                          <button @click="moveToFolder(clip); activeMenu = null"
+                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"></path>
+                            </svg>
+                            移动到文件夹
+                          </button>
+                          <button @click="deleteClipConfirm(clip.id); activeMenu = null"
+                            class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                              </path>
+                            </svg>
+                            删除
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -664,30 +690,6 @@
 
         <!-- 标签视图 -->
         <div v-if="!loading && viewMode === 'tags'">
-          <!-- 调试信息 -->
-          <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm">
-            <div class="font-medium text-green-800 mb-2">🔍 标签视图调试信息</div>
-            <div class="text-green-700 space-y-1">
-              <div>• 加载状态: {{ loading ? '加载中' : '已加载' }}</div>
-              <div>• 视图模式: {{ viewMode }}</div>
-              <div>• 可用标签数量: {{ availableTags.length }}</div>
-              <div>• 当前选中标签: {{ selectedTag }}</div>
-              <div>• 标签收藏数量: {{ tagClips.length }}</div>
-              <div>• 标签列表: {{ availableTags.map(t => `${t.name}(${t.count})`).join(', ') || '无' }}</div>
-            </div>
-            <div class="mt-2 flex gap-2">
-              <button @click="createTestTagsDebug" class="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">
-                🏷️ 创建测试标签
-              </button>
-              <button @click="debugTags" class="px-3 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">
-                🔍 调试标签数据
-              </button>
-              <button @click="refreshTags" class="px-3 py-1 bg-purple-500 text-white rounded text-xs hover:bg-purple-600">
-                🔄 刷新标签
-              </button>
-            </div>
-          </div>
-          
           <!-- 面包屑导航 -->
           <div v-if="selectedTag" class="mb-4 flex items-center gap-2 text-sm">
             <button @click="exitTagView" class="text-blue-600 hover:text-blue-700 flex items-center gap-1">
@@ -704,16 +706,8 @@
 
           <!-- 显示所有标签 -->
           <div v-if="!selectedTag">
-            <!-- 数据检查 -->
-            <div class="mb-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-              <div>数据检查: availableTags.length = {{ availableTags.length }}</div>
-              <div>是否为数组: {{ Array.isArray(availableTags) }}</div>
-              <div>数据类型: {{ typeof availableTags }}</div>
-              <div v-if="availableTags.length > 0">第一个标签: {{ availableTags[0] }}</div>
-            </div>
-            
-            <div v-show="hasTags" class="grid grid-cols-2 gap-3">
-              <button v-for="tag in responsiveTags" :key="tag.id || tag.name" @click="enterTag(tag.name)"
+            <div class="grid grid-cols-2 gap-3">
+              <button v-for="tag in availableTags" :key="tag.id || tag.name" @click="enterTag(tag.name)"
                 class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col items-center text-center">
                 <div
                   class="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl flex items-center justify-center mb-3">
@@ -727,30 +721,37 @@
                 <p class="text-sm text-gray-500">{{ tag.count || 0 }} 条收藏</p>
               </button>
             </div>
-
-            <!-- 空状态 - 无标签 -->
-            <div v-show="!hasTags" class="flex flex-col items-center justify-center py-16 text-center">
-              <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            
+            <!-- 空状态 - 没有标签 -->
+            <div v-if="availableTags.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
+              <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
                   </path>
                 </svg>
               </div>
               <h3 class="text-lg font-medium text-gray-900 mb-2">还没有标签</h3>
-              <p class="text-gray-500 mb-4">为收藏添加标签来更好地组织内容</p>
+              <p class="text-gray-500 mb-4">在编辑收藏时添加标签来组织内容</p>
             </div>
           </div>
 
           <!-- 显示选中标签的收藏 -->
-          <div v-else>
+          <div v-if="selectedTag">
             <div class="grid grid-cols-1 gap-4">
-              <div v-for="clip in tagClips" :key="clip.id"
-                class="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+              <div v-for="clip in tagClips" :key="clip.id" :class="[
+                'group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden',
+                batchMode && selectedClips.includes(clip.id) ? 'ring-2 ring-blue-500 border-blue-500' : ''
+              ]">
                 <!-- 使用与网格视图相同的卡片布局 -->
                 <div class="p-4 pb-3">
                   <div class="flex items-start justify-between mb-2">
                     <div class="flex items-start gap-2 flex-1 min-w-0">
+                      <!-- 批量选择框 -->
+                      <div v-if="batchMode" class="flex-shrink-0 mt-1">
+                        <input type="checkbox" :checked="selectedClips.includes(clip.id)" @change="toggleSelection(clip.id)"
+                          class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                      </div>
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
                           <div class="w-4 h-4 rounded bg-gradient-to-r from-blue-400 to-purple-500 flex-shrink-0"></div>
@@ -773,6 +774,46 @@
                           </path>
                         </svg>
                       </button>
+                      <div class="relative menu-container">
+                        <button @click.stop="toggleMenu(clip.id)"
+                          class="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+                          <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z">
+                            </path>
+                          </svg>
+                        </button>
+                        <!-- 下拉菜单 -->
+                        <div v-if="activeMenu === clip.id"
+                          class="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border z-30" @click.stop>
+                          <button @click="editClip(clip); activeMenu = null"
+                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                              </path>
+                            </svg>
+                            编辑
+                          </button>
+                          <button @click="moveToFolder(clip); activeMenu = null"
+                            class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"></path>
+                            </svg>
+                            移动到文件夹
+                          </button>
+                          <button @click="deleteClipConfirm(clip.id); activeMenu = null"
+                            class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                              </path>
+                            </svg>
+                            删除
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -828,27 +869,6 @@
           </div>
         </div>
 
-        <!-- 空状态 -->
-        <div
-          v-if="!loading && viewMode !== 'folders' && viewMode !== 'tags' && viewMode !== 'favorites' && clips.length === 0"
-          class="flex flex-col items-center justify-center py-16 text-center">
-          <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
-            </svg>
-          </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">还没有收藏</h3>
-          <p class="text-gray-500 mb-4 max-w-sm">
-            在网页上<strong>选中文字</strong>即可自动收藏，<br>
-            或点击上方按钮<strong>整页收藏</strong>。
-          </p>
-          <button @click="clipCurrentPage"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            立即收藏当前页面
-          </button>
-        </div>
-      </div>
 
       <!-- 隐藏的分享卡模板（用来转 PNG） -->
       <div class="fixed -left-[9999px] top-0">
@@ -1455,54 +1475,26 @@ export default {
       }
       return [];
     },
-    // 强制响应式的文件夹列表
-    responsiveFolders() {
-      console.log('🔄 计算属性 responsiveFolders 被调用，数量:', this.folders?.length || 0);
-      return this.folders || [];
-    },
-    // 强制响应式的标签列表
-    responsiveTags() {
-      console.log('🔄 计算属性 responsiveTags 被调用，数量:', this.availableTags?.length || 0);
-      return this.availableTags || [];
-    },
-    // 检查是否有文件夹数据
-    hasFolders() {
-      const result = this.folders && Array.isArray(this.folders) && this.folders.length > 0;
-      console.log('🔄 计算属性 hasFolders:', result, '数量:', this.folders?.length);
-      return result;
-    },
-    // 检查是否有标签数据
-    hasTags() {
-      const result = this.availableTags && Array.isArray(this.availableTags) && this.availableTags.length > 0;
-      console.log('🔄 计算属性 hasTags:', result, '数量:', this.availableTags?.length);
-      return result;
+    // 计算精选收藏
+    favoriteClips() {
+      return this.clips.filter(clip => clip.favorite === true);
     }
   },
-  mounted() {
-    try {
-      console.log('🚀 App.vue mounted 开始初始化...');
-      
-      this.init();
-      this.loadSettings();
+  async mounted() {
+    this.init();
+    this.loadSettings();
 
-      // 初始化时就加载文件夹和标签数据
-      console.log('📁 即将加载文件夹数据...');
-      this.loadFolders();
-      console.log('🏷️ 即将加载标签数据...');
-      this.loadAvailableTags();
+    // 初始化时就加载文件夹和标签数据
+    await this.loadFolders();
+    await this.loadAvailableTags();
 
-      // 添加全局点击事件监听器来关闭菜单
-      this.handleDocumentClick = (event) => {
-        if (this.activeMenu && !event.target.closest('.menu-container')) {
-          this.activeMenu = null;
-        }
-      };
-      document.addEventListener('click', this.handleDocumentClick);
-      
-      console.log('✅ App.vue mounted 初始化完成');
-    } catch (error) {
-      console.error('❌ App.vue mounted 失败:', error);
-    }
+    // 添加全局点击事件监听器来关闭菜单
+    this.handleDocumentClick = (event) => {
+      if (this.activeMenu && !event.target.closest('.menu-container')) {
+        this.activeMenu = null;
+      }
+    };
+    document.addEventListener('click', this.handleDocumentClick);
   },
   methods: {
     // =========================== 基础功能 ===========================
@@ -1603,22 +1595,17 @@ export default {
     },
 
     async loadFolders() {
-      console.log('📁 开始加载文件夹数据...');
       try {
+        this.folders = [];
+        await this.$nextTick();
+        
         const folderData = await listFolders();
-        console.log('📁 数据库返回的文件夹:', folderData);
+        this.folders = [...folderData];
         
-        // 强制更新响应式数据
-        this.$set ? this.$set(this, 'folders', [...folderData]) : (this.folders = [...folderData]);
-        
-        console.log('📁 文件夹数据加载成功:', this.folders);
-        console.log('📁 文件夹数量:', this.folders.length);
-        
-        // 强制重新渲染
-        this.$forceUpdate && this.$forceUpdate();
-        
+        this.$forceUpdate();
+        await this.$nextTick();
       } catch (error) {
-        console.error('❌ 加载文件夹失败:', error);
+        console.error('加载文件夹失败:', error);
         this.folders = [];
       }
     },
@@ -1686,6 +1673,14 @@ export default {
       });
     },
 
+    viewSwitch(viewMode){
+      this.viewMode = viewMode;
+      console.log("视图切换: ",viewMode)
+      console.log("视图切换: ",this.loading)
+      console.log("视图切换: ",this.selectedFolder)
+      console.log("视图切换: ",this.folders)
+    },
+
     showSuccess(message) {
       this.successMessage = message;
       setTimeout(() => {
@@ -1728,26 +1723,25 @@ export default {
     },
 
     async loadAvailableTags() {
-      console.log('🏷️ 开始加载可用标签数据...');
       try {
-        // 先清空数组，确保响应性
         this.availableTags = [];
+        await this.$nextTick();
         
-        // 加载数据
-        const tags = await listTags();
-        console.log('🏷️ 从数据库加载的标签:', tags);
+        const tagData = await listTags();
         
-        // 使用Vue.set或者重新赋值确保响应性
-        this.availableTags = [...tags];
+        // 如果没有标签数据，先尝试同步一次
+        if (tagData.length === 0) {
+          await syncAllTags();
+          const syncedTagData = await listTags();
+          this.availableTags = [...syncedTagData];
+        } else {
+          this.availableTags = [...tagData];
+        }
         
-        console.log('🏷️ 可用标签数据加载成功:', this.availableTags);
-        console.log('🏷️ 标签数量:', this.availableTags.length);
-        
-        // 强制触发重新渲染
         this.$forceUpdate();
-        
+        await this.$nextTick();
       } catch (error) {
-        console.error('❌ 加载可用标签失败:', error);
+        console.error('加载标签失败:', error);
         this.availableTags = [];
       }
     },
@@ -2418,196 +2412,24 @@ export default {
     exitTagView() {
       this.selectedTag = null;
       this.tagClips = [];
-    },
-
-    // =========================== 调试方法 ===========================
-    async createTestFoldersDebug() {
-      try {
-        console.log('📦 开始创建测试文件夹...');
-        const testFolders = [
-          { name: '工作相关', color: '#3b82f6' },
-          { name: '学习资料', color: '#10b981' },
-          { name: '生活娱乐', color: '#f59e0b' },
-          { name: '技术文档', color: '#8b5cf6' },
-          { name: '重要资料', color: '#ef4444' }
-        ];
-        
-        for (const folder of testFolders) {
-          console.log(`📁 创建文件夹: ${folder.name}`);
-          await createFolder(folder.name, folder.color);
-        }
-        
-        console.log('📁 重新加载文件夹数据...');
-        await this.loadFolders();
-        this.showSuccess(`已创建 ${testFolders.length} 个测试文件夹`);
-      } catch (error) {
-        console.error('❌ 创建测试文件夹失败:', error);
-        this.showSuccess('创建测试文件夹失败：' + error.message);
-      }
-    },
-
-    async createTestTagsDebug() {
-      try {
-        console.log('🏷️ 开始创建测试标签...');
-        
-        // 创建一些测试收藏（带标签）
-        const testClips = [
-          {
-            type: 'text',
-            content: '这是一个关于Vue.js的重要学习资料',
-            url: 'https://vuejs.org',
-            title: 'Vue.js 官方文档',
-            tags: ['重要', '学习', '前端', 'Vue']
-          },
-          {
-            type: 'text', 
-            content: '工作中需要用到的API接口文档',
-            url: 'https://api.example.com',
-            title: 'API接口文档',
-            tags: ['工作', '文档', 'API']
-          },
-          {
-            type: 'text',
-            content: '生活中发现的有趣内容',
-            url: 'https://example.com',
-            title: '有趣的生活分享',
-            tags: ['生活', '有趣']
-          }
-        ];
-
-        console.log('📝 创建测试收藏数据...');
-        for (const clip of testClips) {
-          await addClip(clip);
-          console.log(`✅ 创建收藏: ${clip.title}`);
-        }
-
-        console.log('🔄 同步标签数据...');
-        await syncAllTags();
-        
-        console.log('🏷️ 重新加载标签数据...');
-        await this.loadAvailableTags();
-        await this.loadStats();
-        
-        this.showSuccess(`已创建测试数据和标签`);
-      } catch (error) {
-        console.error('❌ 创建测试标签失败:', error);
-        this.showSuccess('创建测试标签失败：' + error.message);
-      }
-    },
-
-    async debugFolders() {
-      try {
-        console.log('🔍 开始调试文件夹数据...');
-        const folders = await listFolders();
-        console.log('📁 数据库中的文件夹:', folders);
-        console.log('📁 Vue组件中的文件夹:', this.folders);
-        
-        const clips = await listClips();
-        console.log('📄 所有收藏:', clips);
-        
-        this.showSuccess(`调试完成：数据库${folders.length}个文件夹，组件${this.folders.length}个文件夹`);
-      } catch (error) {
-        console.error('❌ 调试文件夹失败:', error);
-        this.showSuccess('调试失败：' + error.message);
-      }
-    },
-
-    async debugTags() {
-      try {
-        console.log('🔍 开始调试标签数据...');
-        
-        // 检查数据库中的标签
-        const tags = await listTags();
-        console.log('🏷️ 数据库中的标签:', tags);
-        console.log('🏷️ Vue组件中的标签:', this.availableTags);
-        
-        // 检查所有收藏
-        const clips = await listClips();
-        const clipsWithTags = clips.filter(c => c.tags && c.tags.length > 0);
-        console.log('📄 所有收藏:', clips.length);
-        console.log('📄 有标签的收藏:', clipsWithTags.length);
-        console.log('📄 有标签的收藏详情:', clipsWithTags);
-        
-        // 统计所有使用的标签
-        const usedTags = new Set();
-        clips.forEach(clip => {
-          if (clip.tags && Array.isArray(clip.tags)) {
-            clip.tags.forEach(tag => usedTags.add(tag));
-          }
-        });
-        console.log('📊 实际使用的标签:', Array.from(usedTags));
-        
-        // 检查当前组件状态
-        console.log('🔍 组件状态检查:');
-        console.log('  - viewMode:', this.viewMode);
-        console.log('  - loading:', this.loading);
-        console.log('  - selectedTag:', this.selectedTag);
-        console.log('  - availableTags.length:', this.availableTags.length);
-        console.log('  - availableTags 内容:', this.availableTags);
-        
-        // 强制重新加载数据
-        console.log('🔄 强制重新加载数据...');
-        this.availableTags = [...tags]; // 创建新数组引用
-        await this.$nextTick();
-        console.log('🔄 重新加载后 availableTags.length:', this.availableTags.length);
-        
-        this.showSuccess(`调试完成：数据库${tags.length}个标签，实际使用${usedTags.size}个标签，组件${this.availableTags.length}个标签`);
-      } catch (error) {
-        console.error('❌ 调试标签失败:', error);
-        this.showSuccess('调试失败：' + error.message);
-      }
-    },
-
-    async refreshFolders() {
-      try {
-        console.log('🔄 刷新文件夹数据...');
-        await this.loadFolders();
-        this.showSuccess('文件夹数据已刷新');
-      } catch (error) {
-        console.error('❌ 刷新文件夹失败:', error);
-        this.showSuccess('刷新失败：' + error.message);
-      }
-    },
-
-    async refreshTags() {
-      try {
-        console.log('🔄 刷新标签数据...');
-        await syncAllTags();
-        await this.loadAvailableTags();
-        this.showSuccess('标签数据已刷新');
-      } catch (error) {
-        console.error('❌ 刷新标签失败:', error);
-        this.showSuccess('刷新失败：' + error.message);
-      }
     }
+    
   },
 
   watch: {
     async viewMode(newMode, oldMode) {
-      console.log(`🔄 视图模式切换: ${oldMode} -> ${newMode}`);
-      
-      // 切换视图时重置状态并加载相应数据
+      // 切换视图时重置状态
       this.selectedFolder = null;
       this.selectedTag = null;
       this.folderClips = [];
       this.tagClips = [];
       
-      // 根据新视图模式初始化数据
+      // 根据新视图模式加载数据
       if (newMode === 'folders') {
-        console.log('📁 切换到文件夹视图，加载文件夹数据...');
         await this.loadFolders();
-        console.log('📁 文件夹数据加载完成，folders.length:', this.folders.length);
       } else if (newMode === 'tags') {
-        console.log('🏷️ 切换到标签视图，加载标签数据...');
         await this.loadAvailableTags();
-        console.log('🏷️ 标签数据加载完成，availableTags.length:', this.availableTags.length);
-        
-        // 等待DOM更新
-        await this.$nextTick();
-        console.log('🏷️ DOM更新完成，最终标签数量:', this.availableTags.length);
       }
-      
-      console.log('✅ 视图模式切换完成');
     },
     defaultViewMode() {
       this.saveSettings();
