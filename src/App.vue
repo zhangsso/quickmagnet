@@ -45,17 +45,17 @@
             <div class="text-xs font-bold text-blue-600">{{ stats.totalClips }}</div>
             <div class="text-[10px] text-blue-500">总数</div>
           </div>
-          <div class="bg-green-50 rounded-md p-1">
-            <div class="text-xs font-bold text-green-600">{{ stats.favoriteClips }}</div>
-            <div class="text-[10px] text-green-500">精选</div>
+          <div class="bg-orange-50 rounded-md p-1">
+            <div class="text-xs font-bold text-orange-600">{{ stats.favoriteClips }}</div>
+            <div class="text-[10px] text-orange-500">精选</div>
           </div>
           <div class="bg-purple-50 rounded-md p-1">
             <div class="text-xs font-bold text-purple-600">{{ folders.length }}</div>
             <div class="text-[10px] text-purple-500">文件夹</div>
           </div>
-          <div class="bg-orange-50 rounded-md p-1">
-            <div class="text-xs font-bold text-orange-600">{{ stats.totalTags }}</div>
-            <div class="text-[10px] text-orange-500">标签</div>
+          <div class="bg-green-50 rounded-md p-1">
+            <div class="text-xs font-bold text-green-600">{{ stats.totalTags }}</div>
+            <div class="text-[10px] text-green-500">标签</div>
           </div>
         </div>
 
@@ -503,23 +503,6 @@
 
           <!-- 显示所有文件夹 -->
           <div v-if="selectedFolder == null">
-            <!-- 未分类文件夹 -->
-            <button @click="enterFolder(null)"
-              class="w-full p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-3 mb-3">
-              <div class="w-12 h-12 rounded-xl bg-gray-100 border-2 border-gray-300 flex items-center justify-center">
-                <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"></path>
-                </svg>
-              </div>
-              <div class="flex-1 text-left">
-                <h3 class="font-medium text-gray-900">未分类</h3>
-                <p class="text-sm text-gray-500">{{ getUncategorizedCount() }} 条收藏</p>
-              </div>
-              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </button>
             
             <!-- 文件夹列表 -->
             <div class="space-y-3">
@@ -1083,16 +1066,6 @@
           </div>
           <div class="p-6">
             <div class="space-y-2">
-              <!-- 未分类选项 -->
-              <button @click="moveClipToFolder(null)"
-                class="w-full text-left p-3 border rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors">
-                <div class="w-4 h-4 rounded bg-gray-400"></div>
-                <div>
-                  <div class="font-medium text-sm">未分类</div>
-                  <div class="text-xs text-gray-500">默认收藏夹</div>
-                </div>
-              </button>
-
               <!-- 文件夹列表 -->
               <button v-for="folder in folders" :key="folder.id" @click="moveClipToFolder(folder.id)"
                 class="w-full text-left p-3 border rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors">
